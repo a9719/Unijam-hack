@@ -65,17 +65,22 @@ public class Terminal : MonoBehaviour
     // Code to load scene and start typing
     public IEnumerator LoadScene(string sceneID)
     {
-        XmlNode sceneData = ParseXML.getScene(sceneID);
-        currentScene = sceneData;
-        XmlNodeList decisions = sceneData.SelectNodes(".//decision");
+        // Gets scene from XML file
+        currentScene = ParseXML.getScene(sceneID);
 
-        string message = ReformatString(sceneData.FirstChild.InnerText);
+        // Get decisions from scene
+        XmlNodeList decisions = currentScene.SelectNodes(".//decision");
+
+        string message = ReformatString(currentScene.FirstChild.InnerText);
+
+        // Auto-type main text
         for (int i = 0; i < message.Length; i++)
         {
             textComponent.text = textComponent.text.Substring(0, textComponent.text.Length) + message[i];
             yield return new WaitForSeconds(typingSpeed);
         }
 
+        // Print decisions thereafter
         foreach(XmlNode node in decisions)
         {
             textComponent.text += ReformatString(String.Format("{0} - {1}", node.Attributes[0].Value, node.InnerText));
@@ -88,14 +93,19 @@ public class Terminal : MonoBehaviour
     // Code for decision to be carried out
     private void makeDecision(string decisionID)
     {
-        
+        // Gets decision nodes
         XmlNodeList decisions = currentScene.SelectNodes(".//decision");
+
         foreach (XmlNode node in decisions)
         {
+            // if decision exists, do following things
             if (decisionID == node.Attributes[0].Value)
             {
                 togglePlayerTyping();
+                // Shows that the player responded with the decision
                 textComponent.text = textComponent.text.Remove(textComponent.text.Length - 3) + "YOU: " + node.InnerText + "\n\n";
+
+                // Load next scene
                 StartCoroutine(LoadScene(node.Attributes[1].Value));
             }
         }
@@ -150,9 +160,11 @@ public class Terminal : MonoBehaviour
     {
         char keyPressed = '\0';
 
+        // Number keys are used for decisions. Using this method, there can be no more than 10 decisions
         for (int i = (int)KeyCode.Alpha0; i <= (int)KeyCode.Alpha9; i++) {
             if (Input.GetKeyDown((KeyCode)i))
             {
+                // Run decision and return, the number is never printed and no decision is made if player chose 4 but there are 3 decisions
                 keyPressed = (char)i;
                 makeDecision(keyPressed.ToString());
                 return;
@@ -161,7 +173,7 @@ public class Terminal : MonoBehaviour
 
 
         // Cycle through keys A-Z and check if pressed
-        // I chose this method rather than an InputField simply because this gave me more control
+        // I chose this method rather than an InputField simply because this gives more control about how the terminal responds to inputs
         for (int i = (int)KeyCode.A; i <= (int)KeyCode.Z; i++)
         {
             if (Input.GetKeyDown((KeyCode)i))
@@ -192,7 +204,7 @@ public class Terminal : MonoBehaviour
             {
                 textComponent.text = textComponent.text.Remove(textComponent.text.Length - 1);
                 textComponent.text += keyPressed;
-                ExecuteFunction(command);
+                ExecuteCommand(command);
                 command = "";
                 return;
             }
@@ -206,7 +218,7 @@ public class Terminal : MonoBehaviour
 
 
     // This will be used for executing functions
-    private void ExecuteFunction(string commandLine)
+    private void ExecuteCommand(string commandLine)
     {
         string[] args = commandLine.Split(' ');
 
@@ -216,18 +228,18 @@ public class Terminal : MonoBehaviour
             return;
         }
 
-        string functionName = args[0];
+        string commandName = args[0];
 
-        Command function = (Command)textComponent.gameObject.GetComponent(char.ToUpper(functionName[0]) + functionName.Substring(1));
+        Command command = (Command)textComponent.gameObject.GetComponent(char.ToUpper(commandName[0]) + commandName.Substring(1));
 
-        if (function != null)
+        if (command != null)
         {
-            function.Run(this);
+            command.Run(this);
             return;
         }
         else
         {
-            textComponent.text = string.Concat(textComponent.text, String.Format("The command '{0}' is unrecognised. Please enter 'help' for available commands.\n\n", functionName));
+            textComponent.text = string.Concat(textComponent.text, String.Format("The command '{0}' is unrecognised. Please enter 'help' for available commands.\n\n", commandName));
         }
 
 

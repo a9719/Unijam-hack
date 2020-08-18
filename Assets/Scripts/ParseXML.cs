@@ -26,36 +26,3 @@ public class ParseXML : MonoBehaviour
         return scene;
     }
 }
-
-namespace Xml2CSharp
-{
-	[XmlRoot(ElementName = "decision")]
-	public class Decision
-	{
-		[XmlElement(ElementName = "id")]
-		public string Id { get; set; }
-		[XmlElement(ElementName = "text")]
-		public string Text { get; set; }
-		[XmlElement(ElementName = "destination")]
-		public string Destination { get; set; }
-	}
-
-	[XmlRoot(ElementName = "scene")]
-	public class Scene
-	{
-		[XmlElement(ElementName = "name")]
-		public string Name { get; set; }
-		[XmlElement(ElementName = "text")]
-		public string Text { get; set; }
-		[XmlElement(ElementName = "decision")]
-		public Decision Decision { get; set; }
-	}
-
-	[XmlRoot(ElementName = "story")]
-	public class Story
-	{
-		[XmlElement(ElementName = "scene")]
-		public List<Scene> Scene { get; set; }
-	}
-
-}
