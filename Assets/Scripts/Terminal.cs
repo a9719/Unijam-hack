@@ -1,14 +1,17 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 using System.Collections;
-using System.Collections.Generic;
-using TMPro;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Xml.Serialization;
+using System.Collections.Generic;
 
 public class Terminal : MonoBehaviour
 {
-    public string initMessage = "";
+    public static readonly int TEXT_PADDING = 15;
+    public static readonly string STORY_FILE = "Assets/Resources/StoryFile.xml";
+    private readonly string FIRST_SCENE = "0";
+
     public Text textComponent;
     public float typingSpeed = 0.15f;
     public float typingSpeedMultiplier = 5.0f;
@@ -21,10 +24,13 @@ public class Terminal : MonoBehaviour
     private string[] cursorType = { "_", " " };
     private int currCursorType = 0;
 
+    private XmlNode currentScene;
+
     // Start is called before the first frame update
     void Start()
     {
-        StartCoroutine(BuildText(initMessage));
+        ParseXML.SetFilePath(STORY_FILE);
+        StartCoroutine(LoadScene(FIRST_SCENE));
     }
 
     // Update is called once per frame
@@ -35,7 +41,8 @@ public class Terminal : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             typingSpeed = typingSpeed / typingSpeedMultiplier;
-        } else if (Input.GetKeyUp(KeyCode.Space))
+        }
+        else if (Input.GetKeyUp(KeyCode.Space))
         {
             typingSpeed = typingSpeed * typingSpeedMultiplier;
         }
@@ -55,11 +62,50 @@ public class Terminal : MonoBehaviour
         }
     }
 
+    // Code to load scene and start typing
+    public IEnumerator LoadScene(string sceneID)
+    {
+        XmlNode sceneData = ParseXML.getScene(sceneID);
+        currentScene = sceneData;
+        XmlNodeList decisions = sceneData.SelectNodes(".//decision");
+
+        string message = ReformatString(sceneData.FirstChild.InnerText);
+        for (int i = 0; i < message.Length; i++)
+        {
+            textComponent.text = textComponent.text.Substring(0, textComponent.text.Length) + message[i];
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        foreach(XmlNode node in decisions)
+        {
+            textComponent.text += ReformatString(String.Format("{0} - {1}", node.Attributes[0].Value, node.InnerText));
+        }
+
+        togglePlayerTyping();
+    }
+
+
+    // Code for decision to be carried out
+    private void makeDecision(string decisionID)
+    {
+        
+        XmlNodeList decisions = currentScene.SelectNodes(".//decision");
+        foreach (XmlNode node in decisions)
+        {
+            if (decisionID == node.Attributes[0].Value)
+            {
+                togglePlayerTyping();
+                textComponent.text = textComponent.text.Remove(textComponent.text.Length - 3) + "YOU: " + node.InnerText + "\n\n";
+                StartCoroutine(LoadScene(node.Attributes[1].Value));
+            }
+        }
+    }
+
+
     // Makes text appear one char at a time
     public IEnumerator BuildText(string message)
     {
         message = ReformatString(message);
-        Debug.Log("doing this");
         for (int i = 0; i < message.Length; i++)
         {
             textComponent.text = textComponent.text.Substring(0, textComponent.text.Length) + message[i];
@@ -68,16 +114,16 @@ public class Terminal : MonoBehaviour
         togglePlayerTyping();
     }
 
-    // Changes /n to a newline char so paragraphs can be written from unity
+    // Changes /n to a newline char so paragraphs can be written from unity and xml file
     private string ReformatString(string text)
     {
-        
+
         string newText = ""; // Initialise text
-        
+
         for (int i = 0; i < text.Length; i++)
         {
             // Replaces /n with \n as unity's text editor is a bit funky. Just bear in mind which way the "fake" newline char has the slash
-            if (i <= text.Length - 2 && string.Compare(text.Substring(i, 2), "/n") == 0) 
+            if (i <= text.Length - 2 && string.Compare(text.Substring(i, 2), "/n") == 0)
             {
                 newText = string.Concat(newText, "\n");
                 if (i < text.Length)
@@ -89,7 +135,8 @@ public class Terminal : MonoBehaviour
                 }
                 i++;
 
-            } else
+            }
+            else
             {
                 newText = string.Concat(newText, text[i]);
             }
@@ -103,13 +150,23 @@ public class Terminal : MonoBehaviour
     {
         char keyPressed = '\0';
 
+        for (int i = (int)KeyCode.Alpha0; i <= (int)KeyCode.Alpha9; i++) {
+            if (Input.GetKeyDown((KeyCode)i))
+            {
+                keyPressed = (char)i;
+                makeDecision(keyPressed.ToString());
+                return;
+            }
+        }
+
+
         // Cycle through keys A-Z and check if pressed
         // I chose this method rather than an InputField simply because this gave me more control
         for (int i = (int)KeyCode.A; i <= (int)KeyCode.Z; i++)
         {
             if (Input.GetKeyDown((KeyCode)i))
             {
-                keyPressed = (char) i;
+                keyPressed = (char)i;
             }
         }
 
@@ -119,7 +176,8 @@ public class Terminal : MonoBehaviour
             keyPressed = '\n';
             togglePlayerTyping();
 
-        } else if (Input.GetKeyDown(KeyCode.Space))
+        }
+        else if (Input.GetKeyDown(KeyCode.Space))
         {
             keyPressed = ' ';
         }
@@ -139,7 +197,7 @@ public class Terminal : MonoBehaviour
                 return;
             }
             command += keyPressed;
-        } 
+        }
         else
         {
             textComponent.text = string.Concat(textComponent.text.Remove(textComponent.text.Length - 1), cursorType[currCursorType]);
@@ -160,7 +218,7 @@ public class Terminal : MonoBehaviour
 
         string functionName = args[0];
 
-        Command function = (Command) textComponent.gameObject.GetComponent(char.ToUpper(functionName[0]) + functionName.Substring(1));
+        Command function = (Command)textComponent.gameObject.GetComponent(char.ToUpper(functionName[0]) + functionName.Substring(1));
 
         if (function != null)
         {
@@ -169,10 +227,10 @@ public class Terminal : MonoBehaviour
         }
         else
         {
-            textComponent.text = string.Concat(textComponent.text, String.Format("The command '{0}' is unrecognised. Please enter 'help' for available commands\n\n", functionName));
+            textComponent.text = string.Concat(textComponent.text, String.Format("The command '{0}' is unrecognised. Please enter 'help' for available commands.\n\n", functionName));
         }
 
-        
+
 
         togglePlayerTyping();
     }
@@ -185,11 +243,19 @@ public class Terminal : MonoBehaviour
         {
             textComponent.text = string.Concat(textComponent.text, newLine);
             allowPlayerTyping = true;
-        } else
+        }
+        else
         {
             allowPlayerTyping = false;
         }
     }
 
 
+    public static string AdjoinTextWithPadding(string s1, string s2)
+    {
+        return s1.PadRight(TEXT_PADDING) + s2;
+    }
+
 }
+
+

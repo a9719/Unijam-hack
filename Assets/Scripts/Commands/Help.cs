@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class Help : MonoBehaviour, Command
 {
+
+
     public string text = ""; // I allowed this to be changed with the thought that a difficult level could reply with "Run" or something creepy instead
-    private string description = "<Help> - Displays available commands\n"; // Description of command
+    private readonly string DESCRIPTION = Terminal.AdjoinTextWithPadding("<Help>", "- Displays available commands\n"); // Description of command
    
 
     // Runs command
@@ -31,10 +33,9 @@ public class Help : MonoBehaviour, Command
 
 
     // Overrides ToString function to display description instead
-    override 
+    override
     public string ToString()
     {
-        Debug.Log("reached here");
-        return description;
+        return DESCRIPTION;
     }
 }

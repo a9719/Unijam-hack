@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Quit : MonoBehaviour, Command
 {
-    private string description = "<Quit> - Exits the game\n";
+    private readonly string DESCRIPTION = Terminal.AdjoinTextWithPadding("<Quit>", "- Exits the game\n");
 
     public void Run(Terminal terminal)
     {
@@ -14,6 +14,6 @@ public class Quit : MonoBehaviour, Command
     override
     public string ToString()
     {
-        return description;
+        return DESCRIPTION;
     }
 }

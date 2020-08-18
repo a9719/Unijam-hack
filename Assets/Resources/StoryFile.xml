@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<story>
+  <!-- Starts here -->
+  <scene id ="0">
+    <text>Oh! You're awake</text>
+    <decision id ="0" dest ="01">
+      <text>What? Where am I?</text>
+    </decision>
+    <decision id ="1" dest ="01">
+      <text>What is this place?</text>
+    </decision>
+  </scene>
+
+  <!-- Second decision that triggers infinite loop -->
+  <scene id="01">
+    <text>You're in an infinite loop!</text>
+    <decision id="0" dest ="01">
+      <text>Why me??</text>
+    </decision>
+  </scene>
+</story>

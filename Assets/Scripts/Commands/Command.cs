@@ -4,6 +4,7 @@ using UnityEngine;
 
 interface Command
 {
+
     // Downcasting so we have an extra type of object we can do things with :)
 
     // Runs command
