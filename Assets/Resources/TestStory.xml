@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<story>
+  <!-- Starts here -->
+  <scene id ="0">
+    <text>Oh, Good! /n You're awake.</text>
+    <decision id ="0" dest ="01">
+      <text>What? Where am I?</text>
+    </decision>
+    <decision id ="1" dest ="01">
+      <text>What is this place?</text>
+      <spacebattle win_destination ="characterselection" lose_destination ="01">
+        
+      </spacebattle>
+    </decision>
+  </scene>
+
+  <scene id ="01">
+    <text>You're in </text>
+    <text color = "#ff00ff">Markan</text>
+    <text>. You don't remember? We've been patching you up all night.</text>
+    <decision id ="0" dest ="characterselection">
+      <text>Mar - Markan? I've never heard of this place before.</text>
+    </decision>
+    <decision id ="1" dest ="characterselection">
+      <text>No. Wherever I am, I don't belong here.</text>
+    </decision>
+  </scene>
+  
+  <scene id ="characterselection">
+    <text>Can you tell us who you are? We'll make sure you get home safely.</text>
+    <decision id ="0" dest ="01" minigame="spacebattle">
+      <text>I'm Hector Novengrad of Xyga. I was on an important mission from the council there, and... we were attacked. Now I'm here.</text>
+    </decision>
+    <decision id ="1" dest ="01">
+      <text>You don't recognise me?? Why I'm the governor of this pathetic little planet, now get me out of here!</text>
+    </decision>
+  </scene>
+
+</story>

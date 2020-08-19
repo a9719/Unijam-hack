@@ -5,12 +5,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Xml.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Terminal : MonoBehaviour
 {
     public static readonly int TEXT_PADDING = 15;
-    public static readonly string STORY_FILE = "Assets/Resources/StoryFile.xml";
+    public static readonly string DEFAULT_TEXT_COLOUR = "#ffffff";
+    public static readonly string STORY_FILE = "Assets/Resources/TestStory.xml";
     private readonly string FIRST_SCENE = "0";
+
+    private static readonly string SPACE_BATTLE_SCENE = "space_battle";
+
 
     public Text textComponent;
     public float typingSpeed = 0.15f;
@@ -70,20 +75,29 @@ public class Terminal : MonoBehaviour
 
         // Get decisions from scene
         XmlNodeList decisions = currentScene.SelectNodes(".//decision");
+        XmlNodeList text = currentScene.ChildNodes;
+        List<(string, string)> message = CompileText(text);
 
-        string message = ReformatString(currentScene.FirstChild.InnerText);
-
+        
         // Auto-type main text
-        for (int i = 0; i < message.Length; i++)
+        foreach((string, string) tuple in message)
         {
-            textComponent.text = textComponent.text.Substring(0, textComponent.text.Length) + message[i];
-            yield return new WaitForSeconds(typingSpeed);
+            for (int i = 0; i < tuple.Item2.Length; i++)
+            {
+                // Add colour tags to include newly typed text
+                if (i == 0) textComponent.text += String.Format("<color={0}>", tuple.Item1);
+                else textComponent.text = textComponent.text.Remove(textComponent.text.Length - 8);
+
+                textComponent.text = textComponent.text.Substring(0, textComponent.text.Length) + tuple.Item2[i] + "</color>";
+                yield return new WaitForSeconds(typingSpeed);
+            }
+                
         }
 
         // Print decisions thereafter
         foreach(XmlNode node in decisions)
         {
-            textComponent.text += ReformatString(String.Format("{0} - {1}", node.Attributes[0].Value, node.InnerText));
+            textComponent.text += ReformatString(String.Format("{0} - {1}", node.Attributes[0].Value, node.InnerText), 2);
         }
 
         togglePlayerTyping();
@@ -102,8 +116,15 @@ public class Terminal : MonoBehaviour
             if (decisionID == node.Attributes[0].Value)
             {
                 togglePlayerTyping();
+
+                XmlNode spaceBattle = node.SelectSingleNode(".//spacebattle");
+                if (spaceBattle != null) {
+                    SpaceBattle.InitSpaceBattle(spaceBattle, textComponent);
+                    return;
+                }
+                
                 // Shows that the player responded with the decision
-                textComponent.text = textComponent.text.Remove(textComponent.text.Length - 3) + "YOU: " + node.InnerText + "\n\n";
+                textComponent.text = textComponent.text.Remove(textComponent.text.Length - 3) + "YOU: " + node.InnerText + "\n\n\n";
 
                 // Load next scene
                 StartCoroutine(LoadScene(node.Attributes[1].Value));
@@ -115,7 +136,7 @@ public class Terminal : MonoBehaviour
     // Makes text appear one char at a time
     public IEnumerator BuildText(string message)
     {
-        message = ReformatString(message);
+        message = ReformatString(message, 2);
         for (int i = 0; i < message.Length; i++)
         {
             textComponent.text = textComponent.text.Substring(0, textComponent.text.Length) + message[i];
@@ -125,7 +146,7 @@ public class Terminal : MonoBehaviour
     }
 
     // Changes /n to a newline char so paragraphs can be written from unity and xml file
-    private string ReformatString(string text)
+    private string ReformatString(string text, int newLines)
     {
 
         string newText = ""; // Initialise text
@@ -151,7 +172,42 @@ public class Terminal : MonoBehaviour
                 newText = string.Concat(newText, text[i]);
             }
         }
-        return newText + '\n' + '\n';
+
+        for (int i = 0; i < newLines; i++) newText += '\n';
+
+        return newText;
+    }
+
+    // Compiles text from xml (allows for text in paragraph to have different colours)
+    private List<(string,string)> CompileText(XmlNodeList texts)
+    {
+        List<(string, string)> compiledText = new List<(string, string)>();
+        foreach (XmlNode node in texts)
+        {
+            if (node.Name == "text")
+            {
+                if (node.Attributes.Count > 0)
+                {
+                    compiledText.Add((node.Attributes[0].Value, ReformatString(node.InnerText, 0)));
+                }
+                else
+                {
+                    compiledText.Add((DEFAULT_TEXT_COLOUR, ReformatString(node.InnerText, 0)));
+                }
+            }
+        }
+
+        // Adds new lines to final piece of text
+        if (compiledText.Any())
+        {
+            (string, string) lastItem = compiledText.Last();
+            compiledText.RemoveAt(compiledText.Count - 1);
+            compiledText.Add((lastItem.Item1, ReformatString(lastItem.Item2, 2)));
+        }
+        
+        
+
+        return compiledText;
     }
 
 
@@ -267,6 +323,7 @@ public class Terminal : MonoBehaviour
     {
         return s1.PadRight(TEXT_PADDING) + s2;
     }
+
 
 }
 
