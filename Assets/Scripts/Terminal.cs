@@ -127,7 +127,7 @@ public class Terminal : MonoBehaviour
                 }
                 
                 // Shows that the player responded with the decision
-                textComponent.text = textComponent.text.Remove(textComponent.text.Length - 3) + "YOU: " + node.InnerText + "\n\n\n";
+                textComponent.text = textComponent.text.Remove(textComponent.text.Length - 3) + "YOU: " + node.FirstChild.InnerText + "\n\n\n";
 
                 // Load next scene
                 StartCoroutine(LoadScene(node.Attributes[1].Value));
