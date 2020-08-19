@@ -27,7 +27,7 @@
   
   <scene id ="characterselection">
     <text>Can you tell us who you are? We'll make sure you get home safely.</text>
-    <decision id ="0" dest ="01" minigame="spacebattle">
+    <decision id ="0" dest ="01">
       <text>I'm Hector Novengrad of Xyga. I was on an important mission from the council there, and... we were attacked. Now I'm here.</text>
     </decision>
     <decision id ="1" dest ="01">
