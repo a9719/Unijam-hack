@@ -65,6 +65,8 @@ public class Terminal : MonoBehaviour
             cursorBlinkElapsed = 0;
             currCursorType = (currCursorType + 1) % cursorType.Length;
         }
+
+        ;
     }
 
     // Code to load scene and start typing
@@ -98,6 +100,7 @@ public class Terminal : MonoBehaviour
         foreach(XmlNode node in decisions)
         {
             textComponent.text += ReformatString(String.Format("{0} - {1}", node.Attributes[0].Value, node.InnerText), 2);
+            yield return new WaitForSeconds(typingSpeed);
         }
 
         togglePlayerTyping();

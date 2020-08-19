@@ -10,7 +10,7 @@
     <decision id ="1" dest ="01">
       <text>What is this place?</text>
       <spacebattle win_destination ="characterselection" lose_destination ="01">
-        
+        <opponent>pirate</opponent>
       </spacebattle>
     </decision>
   </scene>
